@@ -72,11 +72,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if not user.is_verified:
-        raise HTTPException(status_code=400, detail="Email not verified")
-
+    # ✅ Allow unverified users to get a token only to verify their email
     access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @app.get("/protected")
 def read_protected(token: str = Depends(oauth2_scheme)):
