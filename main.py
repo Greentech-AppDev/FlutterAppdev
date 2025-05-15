@@ -5,18 +5,11 @@ import datetime
 
 app = FastAPI()
 
-class TemperatureData(BaseModel):
+class SensorData(BaseModel):
     temperature: float
-    timestamp: datetime.datetime
-
-db: List[TemperatureData] = []
+    humidity: float
 
 @app.post("/temperature")
-def post_temperature(data: TemperatureData):
-    db.append(data)
-    return {"message": "Data received"}
-
-@app.get("/temperature")
-def get_temperature():
-    return db
- 
+def receive_data(data: SensorData):
+    print(f"Received temperature: {data.temperature}, humidity: {data.humidity}")
+    return {"message": "Data received successfully"}
