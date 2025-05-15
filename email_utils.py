@@ -6,8 +6,10 @@ conf = ConnectionConfig(
     MAIL_FROM="your_email@example.com",
     MAIL_PORT=587,
     MAIL_SERVER="smtp.example.com",
-    MAIL_TLS=True,
-    MAIL_SSL=False,
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True
 )
 
 async def send_verification_email(email_to: str, token: str):
