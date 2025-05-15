@@ -19,7 +19,7 @@ app = FastAPI()
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-app.include_router(auth.router)
+app.include_router(auth_router)
 
 class SensorData(BaseModel):
     temperature: float
