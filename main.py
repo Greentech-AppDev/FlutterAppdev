@@ -11,6 +11,7 @@ from models import User
 from sqlalchemy.orm import Session
 from database import get_db
 from jose import JWTError, jwt
+from auth import router as auth_router
 from auth import SECRET_KEY, ALGORITHM
 
 app = FastAPI()
