@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import List, Optional
@@ -7,19 +7,18 @@ from datetime import datetime
 from routes import auth
 from auth import create_access_token, get_password_hash, verify_password, get_current_user
 from models import UserIn, UserOut, Token
-from auth import verify_password
 from models import User
 from sqlalchemy.orm import Session
 from database import get_db
+from jose import JWTError, jwt
+from auth import SECRET_KEY, ALGORITHM
 
 app = FastAPI()
 
-
-
+router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app.include_router(auth.router)
-
 
 class SensorData(BaseModel):
     temperature: float
@@ -33,10 +32,8 @@ MAX_HISTORY = 10
 @app.post("/temperature")
 def receive_data(data: SensorData, user: str = Depends(get_current_user)):
     global data_history
-    # Append new data to the history
     data.timestamp = datetime.utcnow().isoformat()
     data_history.append(data)
-    # Keep only the last MAX_HISTORY entries
     if len(data_history) > MAX_HISTORY:
         data_history.pop(0)
     print(f"Received temperature: {data.temperature}, humidity: {data.humidity}")
@@ -46,7 +43,6 @@ def receive_data(data: SensorData, user: str = Depends(get_current_user)):
 def get_latest_data():
     if not data_history:
         return {"message": "No data received yet"}
-    # Return the latest data point
     latest_data = data_history[-1]
     return {"temperature": latest_data.temperature, "humidity": latest_data.humidity}
 
@@ -54,8 +50,7 @@ def get_latest_data():
 def get_data_history():
     if not data_history:
         return {"message": "No data received yet"}
-    return data_history  # Returns list of SensorData with temp, humidity, timestamp
-
+    return data_history
 
 @app.post("/register", response_model=UserOut)
 def register(user: UserIn, db: Session = Depends(get_db)):
@@ -77,10 +72,32 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    if not user.is_verified:
+        raise HTTPException(status_code=400, detail="Email not verified")
+
     access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
-
 
 @app.get("/protected")
 def read_protected(token: str = Depends(oauth2_scheme)):
     return {"message": "Protected route access granted!"}
+
+# ✅ New route for email verification
+@app.get("/verify-email")
+def verify_email(token: str, db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=400, detail="Invalid token")
+
+        user = db.query(User).filter(User.id == int(user_id)).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user.is_verified = True
+        db.commit()
+        return {"message": "Email successfully verified"}
+
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Invalid token")
