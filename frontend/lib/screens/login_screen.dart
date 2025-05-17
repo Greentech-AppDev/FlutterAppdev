@@ -16,7 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> _loginUser() async {
-    const String loginUrl = "http://127.0.0.1:8000/api/login/";
+    // Change this URL if you run on emulator or device
+    const String loginUrl = "http://10.0.2.2:8000/api/login/";
 
     try {
       final response = await http.post(
@@ -156,11 +157,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 value: rememberMe,
                 onChanged: (value) {
                   setState(() {
-                    rememberMe = value!;
+                    rememberMe = value ?? false;
                   });
                 },
               ),
-              const Text('Remember me', style: TextStyle(color: Colors.white)),
+              Text('Remember me', style: TextStyle(color: Colors.green[900])), // Changed to dark green
             ],
           ),
           TextButton(
@@ -169,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
               'Forgot Password',
               style: TextStyle(
                 decoration: TextDecoration.underline,
-                color: Colors.white,
+                color: Colors.white, // If background is light, consider changing to dark color
               ),
             ),
           ),
