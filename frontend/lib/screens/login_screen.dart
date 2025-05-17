@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dashboard_screen.dart';
 
+const String loginUrl = 'https://backendappdev.onrender.com/token';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -16,44 +18,49 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> _loginUser() async {
-    // Change this URL if you run on emulator or device
-    static const String loginUrl    = 'https://backendappdev.onrender.com/token';
+  try {
+    final response = await http.post(
+      Uri.parse(loginUrl),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "username": _usernameController.text.trim(),
+        "password": _passwordController.text.trim(),
+      }),
+    );
 
-    try {
-      final response = await http.post(
-  Uri.parse(loginUrl),
-  headers: {"Content-Type": "application/x-www-form-urlencoded"},
-  body: {
-    "username": _emailController.text,   // FastAPI OAuth2PasswordRequestForm uses 'username'
-    "password": _passwordController.text,
-  },
-);
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login successful!")),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        );
-      } else {
-        final errorData = jsonDecode(response.body);
-        String errorMessage = 'Login failed';
-        errorData.forEach((key, value) {
-          errorMessage = "$key: ${value[0]}";
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        const SnackBar(content: Text("Login successful!")),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } else {
+      final errorData = jsonDecode(response.body);
+      String errorMessage = 'Login failed';
+
+      if (errorData is Map && errorData.isNotEmpty) {
+        errorMessage = errorData.values.first.toString();
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: $e")),
+    );
+  }
+}
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -161,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   });
                 },
               ),
-              Text('Remember me', style: TextStyle(color: Colors.green[900])), // Changed to dark green
+              Text('Remember me', style: TextStyle(color: Colors.green[900])),
             ],
           ),
           TextButton(
@@ -170,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
               'Forgot Password',
               style: TextStyle(
                 decoration: TextDecoration.underline,
-                color: Colors.white, // If background is light, consider changing to dark color
+                color: Colors.white,
               ),
             ),
           ),

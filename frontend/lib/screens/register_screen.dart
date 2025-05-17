@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,33 +15,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // ✅ Correct API endpoint
   static const String registerUrl = 'https://backendappdev.onrender.com/register';
 
   Future<void> _registerUser() async {
-    print("Register tapped"); // For debugging
-
+    print("Register button tapped");
     try {
       final response = await http.post(
         Uri.parse(registerUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "username": _usernameController.text,
-          "email": _emailController.text,
-          "password": _passwordController.text,
+          "username": _usernameController.text.trim(),
+          "email": _emailController.text.trim(),
+          "password": _passwordController.text.trim(),
         }),
       );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (!mounted) return;  // <-- Check if widget is still mounted here
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registered successfully!')),
         );
-        Navigator.pop(context);
-      } else {
-        final Map<String, dynamic> errorData = jsonDecode(response.body);
-        String errorMessage = 'Registration failed';
 
-        if (errorData.isNotEmpty) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+
+        print("Navigation to DashboardScreen triggered");
+      } else {
+        final errorData = jsonDecode(response.body);
+        String errorMessage = 'Registration failed';
+        if (errorData is Map && errorData.isNotEmpty) {
           errorMessage = errorData.values.first.toString();
         }
 
@@ -49,10 +58,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (e) {
+      print("Error during registration: $e");
+      if (!mounted) return;  // <-- Check here before using context
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: ${e.toString()}")),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -86,10 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const SizedBox(height: 30),
                 Center(
-                  child: Image.asset(
-                    'assets/logo.png',
-                    width: 140,
-                  ),
+                  child: Image.asset('assets/logo.png', width: 140),
                 ),
                 const SizedBox(height: 10),
                 Expanded(
@@ -107,7 +124,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 70),
 
-                        // Username
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: TextField(
@@ -117,7 +133,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Email
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: TextField(
@@ -127,7 +142,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Password
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: TextField(
@@ -138,7 +152,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 30),
 
-                        // REGISTER button
                         ElevatedButton(
                           onPressed: _registerUser,
                           style: ElevatedButton.styleFrom(
