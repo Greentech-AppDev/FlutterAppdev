@@ -15,7 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   // ✅ Correct API endpoint
-  static const String registerUrl = 'https://backend-iot-appdev.onrender.com/register';
+  static const String registerUrl = 'https://backendappdev.onrender.com/register';
 
   Future<void> _registerUser() async {
     print("Register tapped"); // For debugging

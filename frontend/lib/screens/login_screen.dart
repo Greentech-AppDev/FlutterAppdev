@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loginUser() async {
     // Change this URL if you run on emulator or device
-    static const String loginUrl    = 'https://backend-iot-appdev.onrender.com/token';
+    static const String loginUrl    = 'https://backendappdev.onrender.com/token';
 
     try {
       final response = await http.post(

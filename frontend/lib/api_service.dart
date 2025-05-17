@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl = 'https://backend-iot-appdev.onrender.com';
+  final String baseUrl = 'https://backendappdev.onrender.com';
 
   Future<void> fetchData() async {
     try {
