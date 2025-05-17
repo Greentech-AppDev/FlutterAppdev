@@ -14,34 +14,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // ✅ Correct API endpoint
+  static const String registerUrl = 'https://backend-iot-appdev.onrender.com/register';
+
   Future<void> _registerUser() async {
-    const String apiUrl = "https://backend-iot-appdev.onrender.com/api/register/";
+    print("Register tapped"); // For debugging
 
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "username": _usernameController.text,
-        "email": _emailController.text,
-        "password": _passwordController.text,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      // reg success
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registered successfully!')),
+    try {
+      final response = await http.post(
+        Uri.parse(registerUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": _usernameController.text,
+          "email": _emailController.text,
+          "password": _passwordController.text,
+        }),
       );
-      Navigator.pop(context); 
-    } else {
-      // Registration failed
-      final Map<String, dynamic> errorData = jsonDecode(response.body);
-      String errorMessage = 'Registration failed';
-      errorData.forEach((key, value) {
-        errorMessage = "$key: ${value[0]}";
-      });
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registered successfully!')),
+        );
+        Navigator.pop(context);
+      } else {
+        final Map<String, dynamic> errorData = jsonDecode(response.body);
+        String errorMessage = 'Registration failed';
+
+        if (errorData.isNotEmpty) {
+          errorMessage = errorData.values.first.toString();
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
+        SnackBar(content: Text("Error: ${e.toString()}")),
       );
     }
   }

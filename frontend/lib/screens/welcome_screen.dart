@@ -10,10 +10,13 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
+          // ⬇️  Background image now ignores taps
           Positioned.fill(
-            child: Image.asset(
-              'assets/bg.png',
-              fit: BoxFit.cover,
+            child: IgnorePointer(
+              child: Image.asset(
+                'assets/bg.png',
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           Center(
@@ -31,8 +34,11 @@ class WelcomeScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 Image.asset('assets/logo.png', width: 250),
                 const SizedBox(height: 30),
+
+                // 🔵 LOGIN
                 ElevatedButton(
                   onPressed: () {
+                    print('Login tapped');           // debug line
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -49,8 +55,11 @@ class WelcomeScreen extends StatelessWidget {
                   child: const Text('Login', style: TextStyle(fontSize: 20)),
                 ),
                 const SizedBox(height: 15),
+
+                // 🟢 REGISTER
                 ElevatedButton(
                   onPressed: () {
+                    print('Register tapped');        // debug line
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const RegisterScreen()),

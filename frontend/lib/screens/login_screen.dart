@@ -17,17 +17,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loginUser() async {
     // Change this URL if you run on emulator or device
-    const String loginUrl = "https://backend-iot-appdev.onrender.com/api/login/";
+    static const String loginUrl    = 'https://backend-iot-appdev.onrender.com/token';
 
     try {
       final response = await http.post(
-        Uri.parse(loginUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username": _usernameController.text,
-          "password": _passwordController.text,
-        }),
-      );
+  Uri.parse(loginUrl),
+  headers: {"Content-Type": "application/x-www-form-urlencoded"},
+  body: {
+    "username": _emailController.text,   // FastAPI OAuth2PasswordRequestForm uses 'username'
+    "password": _passwordController.text,
+  },
+);
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
