@@ -1,22 +1,9 @@
 import 'package:flutter/material.dart';
-import '../api_service.dart';  // Make sure this path matches your project structure
 import 'login_screen.dart';
+import 'register_screen.dart';
 
-class WelcomeScreen extends StatefulWidget {
+class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
-
-  @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
-}
-
-class _WelcomeScreenState extends State<WelcomeScreen> {
-  final ApiService apiService = ApiService();
-
-  @override
-  void initState() {
-    super.initState();
-    apiService.fetchData(); // Call API on screen load
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +30,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 const SizedBox(height: 20),
                 Image.asset('assets/logo.png', width: 250),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 15, 73, 19),
                     foregroundColor: Colors.white,
@@ -53,14 +46,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  child: const Text('Login', style: TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(height: 15),
+                ElevatedButton(
                   onPressed: () {
-                    apiService.fetchData(); // Optional manual fetch on button tap
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     );
                   },
-                  child: const Text('Get Started', style: TextStyle(fontSize: 20)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 39, 92, 41),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Register', style: TextStyle(fontSize: 20)),
                 ),
               ],
             ),

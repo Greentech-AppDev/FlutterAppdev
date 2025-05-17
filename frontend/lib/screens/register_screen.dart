@@ -15,7 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> _registerUser() async {
-    const String apiUrl = "http://127.0.0.1:8000/api/register/";
+    const String apiUrl = "https://backend-iot-appdev.onrender.com/api/register/";
 
     final response = await http.post(
       Uri.parse(apiUrl),
