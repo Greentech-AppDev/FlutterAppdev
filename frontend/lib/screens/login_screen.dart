@@ -7,15 +7,15 @@ const String loginUrl = 'https://backendappdev.onrender.com/token';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _email = TextEditingController();
-  final _pwd   = TextEditingController();
-
-  bool _loading = false;
+  final _username = TextEditingController();   // ← actually for email input
+  final _pwd      = TextEditingController();
+  bool  _loading  = false;
 
   /* ───── LOGIN ───── */
   Future<void> _loginUser() async {
@@ -26,25 +26,25 @@ class _LoginScreenState extends State<LoginScreen> {
         Uri.parse(loginUrl),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
-          'username': _email.text.trim(),
-          'password': _pwd.text.trim(),
-          // **grant_type omitted – FastAPI will set it to "" automatically**
+          // FastAPI OAuth2PasswordRequestForm expects **username** field, which is actually the email here
+          'username'   : _username.text.trim(),
+          'password'   : _pwd.text.trim(),
+          'grant_type' : 'password',   // MUST be literally "password"
         },
       );
 
-      print('Login ► status: ${res.statusCode}');
-      print('Login ► body  : ${res.body}');
-
       setState(() => _loading = false);
+      debugPrint('Login ► status: ${res.statusCode}');
+      debugPrint('Login ► body  : ${res.body}');
 
       if (res.statusCode == 200) {
-        final token = jsonDecode(res.body)['access_token'] as String;
-        // TODO: store token securely (SharedPreferences / flutter_secure_storage)
+        final token = jsonDecode(res.body)['access_token'] as String? ?? '';
+        // TODO: save token securely
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Login successful')));
-
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login successful')),
+        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
@@ -62,61 +62,69 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final decoded = jsonDecode(body);
       if (decoded is Map) return decoded['detail']?.toString() ?? 'Login failed';
-      if (decoded is List && decoded.isNotEmpty) return decoded[0]['msg'] ?? 'Login failed';
     } catch (_) {}
     return 'Login failed';
   }
 
-  void _showError(String message) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  void _showError(String msg) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   /* ───── UI ───── */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(children: [
-        Positioned.fill(child: Image.asset('assets/bg2.png', fit: BoxFit.cover)),
-        SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Column(children: [
-                  const SizedBox(height: 30),
-                  Image.asset('assets/logo.png', width: 120),
-                  const SizedBox(height: 10),
-                  Text('Welcome Back',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green[900])),
-                  const SizedBox(height: 90),
-                  _inputField('Email', _email),
-                  const SizedBox(height: 20),
-                  _inputField('Password', _pwd, isPassword: true),
-                  const SizedBox(height: 30),
-                  _loading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: _loginUser,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFDCF8C6),
-                            foregroundColor: Colors.green[900],
-                            padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          ),
-                          child: const Text('LOGIN', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                        ),
-                ]),
+      body: Stack(
+        children: [
+          Positioned.fill(child: Image.asset('assets/bg2.png', fit: BoxFit.cover)),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (ctx, c) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: c.maxHeight),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 30),
+                      Image.asset('assets/logo.png', width: 120),
+                      const SizedBox(height: 10),
+                      Text('Welcome Back',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[900],
+                          )),
+                      const SizedBox(height: 90),
+                      _input('Email', _username),  // changed label here
+                      const SizedBox(height: 20),
+                      _input('Password', _pwd, isPassword: true),
+                      const SizedBox(height: 30),
+                      _loading
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                              onPressed: _loginUser,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFDCF8C6),
+                                foregroundColor: Colors.green[900],
+                                padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 18),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              ),
+                              child: const Text('LOGIN',
+                                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                            ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
-  Widget _inputField(String hint, TextEditingController ctrl, {bool isPassword = false}) => Padding(
+  Widget _input(String hint, TextEditingController c, {bool isPassword = false}) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
         child: TextField(
-          controller: ctrl,
+          controller: c,
           obscureText: isPassword,
           decoration: InputDecoration(
             filled: true,
@@ -124,14 +132,17 @@ class _LoginScreenState extends State<LoginScreen> {
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF336633)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       );
 
   @override
   void dispose() {
-    _email.dispose();
+    _username.dispose();
     _pwd.dispose();
     super.dispose();
   }

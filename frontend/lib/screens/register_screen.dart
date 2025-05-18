@@ -11,165 +11,118 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _username = TextEditingController();
+  final _email    = TextEditingController();
+  final _password = TextEditingController();
 
   static const String registerUrl = 'https://backendappdev.onrender.com/register';
 
   Future<void> _registerUser() async {
-    print("Register button tapped");
+    debugPrint('Register button tapped');
     try {
-      final response = await http.post(
+      final res = await http.post(
         Uri.parse(registerUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          "username": _usernameController.text.trim(),
-          "email": _emailController.text.trim(),
-          "password": _passwordController.text.trim(),
+          'username': _username.text.trim(),
+          'email'   : _email.text.trim(),
+          'password': _password.text.trim(),
         }),
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      debugPrint('Register ► status: ${res.statusCode}');
+      debugPrint('Register ► body  : ${res.body}');
 
-      if (!mounted) return;  // <-- Check if widget is still mounted here
+      if (!mounted) return;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registered successfully!')),
-        );
-
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Registered successfully!')));
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
         );
-
-        print("Navigation to DashboardScreen triggered");
       } else {
-        final errorData = jsonDecode(response.body);
-        String errorMessage = 'Registration failed';
-        if (errorData is Map && errorData.isNotEmpty) {
-          errorMessage = errorData.values.first.toString();
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
+        _showError(_extractError(res.body));
       }
     } catch (e) {
-      print("Error during registration: $e");
-      if (!mounted) return;  // <-- Check here before using context
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
+      _showError('Error: $e');
     }
   }
 
+  String _extractError(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded.isNotEmpty) return decoded.values.first.toString();
+    } catch (_) {}
+    return 'Registration failed';
+  }
+
+  void _showError(String msg) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
   @override
   void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _username.dispose();
+    _email.dispose();
+    _password.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final inputDecoration = InputDecoration(
+    final deco = InputDecoration(
       filled: true,
       fillColor: const Color(0xFFDCF8C6),
-      hintStyle: const TextStyle(
-        color: Colors.green,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide.none,
-      ),
+      hintStyle: const TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
     );
 
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/bg2.png',
-              fit: BoxFit.cover,
-            ),
-          ),
+          Positioned.fill(child: Image.asset('assets/bg2.png', fit: BoxFit.cover)),
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 30),
-                Center(
-                  child: Image.asset('assets/logo.png', width: 140),
+                // ← Back arrow
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
+                        Image.asset('assets/logo.png', width: 140),
+                        const SizedBox(height: 10),
+                        const Text('Register',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 19, 82, 21),
+                            )),
+                        const SizedBox(height: 60),
+                        _textField(deco, 'Username', _username),
                         const SizedBox(height: 20),
-                        const Text(
-                          'Register',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromARGB(255, 19, 82, 21),
-                          ),
-                        ),
-                        const SizedBox(height: 70),
-
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                          child: TextField(
-                            controller: _usernameController,
-                            decoration: inputDecoration.copyWith(hintText: "Username"),
-                          ),
-                        ),
+                        _textField(deco, 'Email', _email),
                         const SizedBox(height: 20),
-
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                          child: TextField(
-                            controller: _emailController,
-                            decoration: inputDecoration.copyWith(hintText: "Email"),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                          child: TextField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            decoration: inputDecoration.copyWith(hintText: "Password"),
-                          ),
-                        ),
+                        _textField(deco, 'Password', _password, obscure: true),
                         const SizedBox(height: 30),
-
                         ElevatedButton(
                           onPressed: _registerUser,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green[900],
                             padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 25),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           ),
-                          child: const Text(
-                            'REGISTER',
-                            style: TextStyle(
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 1,
-                            ),
-                          ),
+                          child: const Text('REGISTER',
+                              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white)),
                         ),
                         const SizedBox(height: 40),
                       ],
@@ -183,4 +136,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
+  Widget _textField(InputDecoration deco, String hint, TextEditingController c,
+          {bool obscure = false}) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        child: TextField(
+          controller: c,
+          obscureText: obscure,
+          decoration: deco.copyWith(hintText: hint),
+        ),
+      );
 }
