@@ -4,16 +4,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
 from routes import auth
-from auth import create_access_token, get_password_hash, verify_password, get_current_user
-from models import UserIn, UserOut, Token
-from models import User
-from sqlalchemy.orm import Session
-from database import get_db
-from jose import JWTError, jwt
-from auth import router as auth_router
-from auth import SECRET_KEY, ALGORITHM
+from auth import (
+    create_access_token, get_password_hash, verify_password, get_current_user,
+    router as auth_router, SECRET_KEY, ALGORITHM
+)
+from models import UserIn, UserOut, Token, User, Temperature  # Ensure Temperature is imported
+from database import get_db, SessionLocal  # Ensure SessionLocal is imported
 
 app = FastAPI()
 
@@ -25,9 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 app.include_router(auth_router)
 
 class SensorData(BaseModel):
@@ -54,6 +52,18 @@ def get_latest_data():
         return {"message": "No data received yet"}
     latest_data = data_history[-1]
     return {"temperature": latest_data.temperature, "humidity": latest_data.humidity}
+
+@app.get("/latest-temperature")
+def get_latest_temperature():
+    db = SessionLocal()
+    latest = db.query(Temperature).order_by(Temperature.id.desc()).first()
+    if latest is None:
+        raise HTTPException(status_code=404, detail="No temperature data found")
+    return {
+        "temperature": latest.temperature,
+        "humidity": latest.humidity,
+        "timestamp": latest.timestamp
+    }
 
 @app.get("/history")
 def get_data_history():
