@@ -4,24 +4,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
-from jose import JWTError, jwt
+
+from routes import auth
+from auth import create_access_token, get_password_hash, verify_password, get_current_user
+from models import UserIn, UserOut, Token
+from models import User
 from sqlalchemy.orm import Session
-
-# ─── local imports ────────────────────────────────────────────────────────────
-from routes import auth                                # existing auth router
-from auth import (
-    create_access_token,
-    get_password_hash,
-    verify_password,
-    get_current_user,
-    router as auth_router,
-    SECRET_KEY,
-    ALGORITHM,
-)
-from models import UserIn, UserOut, Token, User
 from database import get_db
+from jose import JWTError, jwt
+from auth import router as auth_router
+from auth import SECRET_KEY, ALGORITHM
 
-# ─── app setup ────────────────────────────────────────────────────────────────
 app = FastAPI()
 
 app.add_middleware(
@@ -32,62 +25,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# register the existing auth routes
 app.include_router(auth_router)
 
-# ─── in‑memory sensor storage (keeps last 10) ────────────────────────────────
 class SensorData(BaseModel):
-    water_temperature: float  # ESP32 sends "temperature" → water temp
-    air_temperature:  float   # ESP32 sends "humidity"    → air temp
-    ts: Optional[str] = None  # ISO timestamp
+    temperature: float
+    humidity: float
+    timestamp: Optional[str] = None
 
 data_history: List[SensorData] = []
 MAX_HISTORY = 10
 
-# ─── endpoints used by ESP32 ─────────────────────────────────────────────────
 @app.post("/temperature")
 def receive_data(data: SensorData, user: str = Depends(get_current_user)):
-    """
-    ESP32 POSTs JSON: {"water_temperature":22.3,"air_temperature":26.0}
-    """
-    data.ts = datetime.utcnow().isoformat()
+    global data_history
+    data.timestamp = datetime.utcnow().isoformat()
     data_history.append(data)
     if len(data_history) > MAX_HISTORY:
         data_history.pop(0)
-    print(
-        f"Received water_temp={data.water_temperature}, "
-        f"air_temp={data.air_temperature}"
-    )
+    print(f"Received temperature: {data.temperature}, humidity: {data.humidity}")
     return {"message": "Data received successfully"}
 
-# ─── latest reading for Flutter dashboard ────────────────────────────────────
-@app.get("/temperature/latest")
-def latest_temperature(user: str = Depends(get_current_user)):
-    """
-    Return the most recent sensor reading (water & air temperature).
-    """
+@app.get("/temperature")
+def get_latest_data():
     if not data_history:
-        return {"detail": "No readings yet"}
-    row = data_history[-1]
-    return {
-        "water_temperature": row.water_temperature,
-        "air_temperature":  row.air_temperature,
-        "ts":               row.ts,
-    }
+        return {"message": "No data received yet"}
+    latest_data = data_history[-1]
+    return {"temperature": latest_data.temperature, "humidity": latest_data.humidity}
 
-# ─── optional helpers ────────────────────────────────────────────────────────
-@app.get("/temperature/history")
-def get_data_history(user: str = Depends(get_current_user)):
-    """
-    Return up to the last 10 readings.
-    """
+@app.get("/history")
+def get_data_history():
     if not data_history:
-        return {"detail": "No readings yet"}
+        return {"message": "No data received yet"}
     return data_history
 
-# ─── auth, register, token, verify routes (unchanged) ───────────────────────
 @app.post("/register", response_model=Token)
 def register(user: UserIn, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
@@ -103,7 +76,6 @@ def register(user: UserIn, db: Session = Depends(get_db)):
     access_token = create_access_token(data={"sub": str(new_user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
-
 @app.post("/token", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
@@ -113,11 +85,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
 
-
 @app.get("/protected")
 def read_protected(token: str = Depends(oauth2_scheme)):
     return {"message": "Protected route access granted!"}
-
 
 @app.get("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):
