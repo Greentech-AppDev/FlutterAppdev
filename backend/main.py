@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status, APIRouter
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,11 +12,12 @@ from auth import (
     create_access_token, get_password_hash, verify_password, get_current_user,
     router as auth_router, SECRET_KEY, ALGORITHM
 )
-from models import UserIn, UserOut, Token, User, Temperature  # Ensure Temperature is imported
-from database import get_db, SessionLocal  # Ensure SessionLocal is imported
+from models import UserIn, UserOut, Token, User            # ⬅️ removed Temperature
+from database import get_db                                # ⬅️ removed SessionLocal
 
 app = FastAPI()
 
+# ── CORS ──────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,76 +26,70 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── OAuth2 / auth routes ─────────────────────────────────────────────
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app.include_router(auth_router)
 
+# ── In‑memory sensor storage ──────────────────────────────────────────
 class SensorData(BaseModel):
-    temperature: float
-    humidity: float
-    timestamp: Optional[str] = None
+    temperature: float          # water temp from ESP32
+    humidity: float             # air temp from ESP32
+    ts: Optional[str] = None
 
 data_history: List[SensorData] = []
 MAX_HISTORY = 10
 
+# ── ESP32 POSTs readings here ────────────────────────────────────────
 @app.post("/temperature")
 def receive_data(data: SensorData, user: str = Depends(get_current_user)):
-    global data_history
-    data.timestamp = datetime.utcnow().isoformat()
+    data.ts = datetime.utcnow().isoformat()
     data_history.append(data)
     if len(data_history) > MAX_HISTORY:
         data_history.pop(0)
-    print(f"Received temperature: {data.temperature}, humidity: {data.humidity}")
+    print(f"Received temperature={data.temperature}, humidity={data.humidity}")
     return {"message": "Data received successfully"}
 
-@app.get("/temperature")
-def get_latest_data():
+# ── Flutter dashboard polls this every 3 s ───────────────────────────
+@app.get("/temperature/latest")
+def latest_temperature(user: str = Depends(get_current_user)):
     if not data_history:
-        return {"message": "No data received yet"}
-    latest_data = data_history[-1]
-    return {"temperature": latest_data.temperature, "humidity": latest_data.humidity}
-
-@app.get("/latest-temperature")
-def get_latest_temperature():
-    db = SessionLocal()
-    latest = db.query(Temperature).order_by(Temperature.id.desc()).first()
-    if latest is None:
-        raise HTTPException(status_code=404, detail="No temperature data found")
+        raise HTTPException(status_code=404, detail="No readings yet")
+    row = data_history[-1]
     return {
-        "temperature": latest.temperature,
-        "humidity": latest.humidity,
-        "timestamp": latest.timestamp
+        "water_temperature": row.temperature,
+        "air_temperature":  row.humidity,
+        "ts":               row.ts,
     }
 
-@app.get("/history")
-def get_data_history():
+# (Optional) full history
+@app.get("/temperature/history")
+def get_data_history(user: str = Depends(get_current_user)):
     if not data_history:
-        return {"message": "No data received yet"}
+        raise HTTPException(status_code=404, detail="No readings yet")
     return data_history
 
+# ── User registration / login (unchanged) ────────────────────────────
 @app.post("/register", response_model=Token)
 def register(user: UserIn, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
+    if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-
     hashed_pw = get_password_hash(user.password)
     new_user = User(email=user.email, hashed_password=hashed_pw)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
-    access_token = create_access_token(data={"sub": str(new_user.id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": create_access_token(data={"sub": str(new_user.id)}),
+            "token_type": "bearer"}
 
 @app.post("/token", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"access_token": create_access_token(data={"sub": str(user.id)}),
+            "token_type": "bearer"}
 
-    access_token = create_access_token(data={"sub": str(user.id)})
-    return {"access_token": access_token, "token_type": "bearer"}
-
+# ── Misc routes ──────────────────────────────────────────────────────
 @app.get("/protected")
 def read_protected(token: str = Depends(oauth2_scheme)):
     return {"message": "Protected route access granted!"}
@@ -114,6 +109,5 @@ def verify_email(token: str, db: Session = Depends(get_db)):
         user.is_verified = True
         db.commit()
         return {"message": "Email successfully verified"}
-
     except JWTError:
         raise HTTPException(status_code=400, detail="Invalid token")
