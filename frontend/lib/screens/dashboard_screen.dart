@@ -17,7 +17,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late Timer _timer;
 
   // Replace with your Render endpoint
-  static const _url = 'https://backendappdev.onrender.com/latest-temperature';
+  static const _url = 'https://backendappdev.onrender.com/temperature/latest';
   static const _bearer =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ3Njc5NzM1fQ.74DzO5pwfKlrPJx1UL0OUAWe05rXOEy3RjXINAW1IWM';
 
@@ -92,12 +92,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 30),
               _card(
                   icon: 'assets/watertemplogo.png',
-                  label: 'Water Temperature',
+                  label: 'Temperature',
                   value: waterTemp != null ? '${waterTemp!.toStringAsFixed(1)}°C' : '—'),
               const SizedBox(height: 20),
               _card(
                   icon: 'assets/airtemplogo.png',
-                  label: 'Air Temperature',
+                  label: 'Humidity',
                   value: airTemp != null ? '${airTemp!.toStringAsFixed(1)}°C' : '—'),
               const SizedBox(height: 40),
             ]),
