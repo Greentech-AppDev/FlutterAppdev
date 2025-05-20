@@ -16,7 +16,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double? airTemp;
   late Timer _timer;
 
-  // Replace with your Render endpoint
   static const _url = 'https://backendappdev.onrender.com/temperature/latest';
   static const _bearer =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ3NzU3NzcxfQ.r_jxOkuud1tkIjfn9-Yp1-6ODWCwGoT8nPxyIPMrrBU';
@@ -24,9 +23,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _fetch();                             // get immediately
+    _fetch();
     _timer = Timer.periodic(
-      const Duration(seconds: 3), (_) => _fetch()); // then every 3 s
+      const Duration(seconds: 3), (_) => _fetch());
   }
 
   Future<void> _fetch() async {
@@ -38,7 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final data = jsonDecode(res.body);
         setState(() {
           waterTemp = data['water_temperature']?.toDouble();
-          airTemp   = data['air_temperature']?.toDouble();
+          airTemp = data['air_temperature']?.toDouble();
         });
       } else {
         debugPrint('HTTP ${res.statusCode}');
@@ -57,50 +56,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
       body: Stack(children: [
         Positioned.fill(
-            child: Image.asset('assets/bg2.png', fit: BoxFit.cover)),
+          child: Image.asset(
+            'assets/bg2.png',
+            fit: BoxFit.cover,
+          ),
+        ),
         SafeArea(
-          child: SingleChildScrollView(
-            child: Column(children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const WelcomeScreen()),
-                        (_) => false),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0B4F13),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            width: double.infinity,
+            child: SingleChildScrollView(
+              child: Column(children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const WelcomeScreen()),
+                          (_) => false),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0B4F13),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                      ),
+                      icon: const Icon(Icons.home),
+                      label: const Text('HOME'),
                     ),
-                    icon: const Icon(Icons.home),
-                    label: const Text('HOME'),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Image.asset('assets/logo.png', width: 70),
-              const SizedBox(height: 20),
-              _title('TEMPERATURE'),
-              const SizedBox(height: 30),
-              _card(
+                const SizedBox(height: 10),
+                Image.asset('assets/logo.png', width: 70),
+                const SizedBox(height: 20),
+                _title('TEMPERATURE'),
+                const SizedBox(height: 30),
+                _card(
                   icon: 'assets/watertemplogo.png',
                   label: 'Temperature',
-                  value: waterTemp != null ? '${waterTemp!.toStringAsFixed(1)}°C' : '—'),
-              const SizedBox(height: 20),
-              _card(
+                  value: waterTemp != null
+                      ? '${waterTemp!.toStringAsFixed(1)}°C'
+                      : '—'),
+                const SizedBox(height: 20),
+                _card(
                   icon: 'assets/airtemplogo.png',
                   label: 'Humidity',
-                  value: airTemp != null ? '${airTemp!.toStringAsFixed(1)}°C' : '—'),
-              const SizedBox(height: 40),
-            ]),
+                  value: airTemp != null
+                      ? '${airTemp!.toStringAsFixed(1)}°C'
+                      : '—'),
+                const SizedBox(height: 40),
+              ]),
+            ),
           ),
         ),
       ]),
@@ -116,10 +126,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 letterSpacing: 1.2)),
       );
 
-  Widget _card(
-          {required String icon,
-          required String label,
-          required String value}) =>
+  Widget _card({
+    required String icon,
+    required String label,
+    required String value,
+  }) =>
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Container(
