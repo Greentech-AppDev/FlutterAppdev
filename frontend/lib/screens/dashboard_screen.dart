@@ -18,7 +18,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   static const _url = 'https://backendappdev.onrender.com/temperature/latest';
   static const _bearer =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzQ3NzU3NzcxfQ.r_jxOkuud1tkIjfn9-Yp1-6ODWCwGoT8nPxyIPMrrBU';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ3NzczMjkwfQ.z5Jo1DeGbP8RUyD91VwcsmcgAN6bT0KUo86AVbBIxvk';
 
   @override
   void initState() {
