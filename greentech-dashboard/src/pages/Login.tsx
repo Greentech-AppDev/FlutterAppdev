@@ -5,9 +5,9 @@ import bg from "../assets/bg2.png";
 import logo from "../assets/logo.png";
 
 export default function Login() {
-  const nav   = useNavigate();
-  const [email, setEmail]     = useState("");
-  const [pwd,   setPwd]       = useState("");
+  const nav = useNavigate();
+  const [email, setEmail] = useState("");
+  const [pwd, setPwd] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
@@ -30,8 +30,9 @@ export default function Login() {
   return (
     <div className="relative min-h-screen">
       <img src={bg} className="absolute inset-0 -z-10 h-full w-full object-cover" />
-      <div className="flex flex-col items-center gap-8 pt-10">
-        <img src={logo} className="w-32" />
+
+      <div className="flex flex-col items-center gap-8 pt-10 pb-16">
+        <img src={logo} className="w-36" />
         <h2 className="text-3xl font-bold text-green-900">Welcome Back</h2>
 
         <input
@@ -50,7 +51,7 @@ export default function Login() {
 
         {loading
           ? <div className="loader" />
-          : <button className="btn-primary w-60" onClick={submit}>LOGIN</button>}
+          : <button className="btn-primary" onClick={submit}>LOGIN</button>}
       </div>
     </div>
   );

@@ -1,23 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/api";
-import bg   from "../assets/bg2.png";
+import bg from "../assets/bg2.png";
 import logo from "../assets/logo.png";
 
 export default function Register() {
   const nav = useNavigate();
-
   const [username, setUsername] = useState("");
-  const [email,    setEmail]    = useState("");
-  const [pwd,      setPwd]      = useState("");
-  const [loading,  setLoading]  = useState(false);
+  const [email, setEmail] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const submit = async () => {
     setLoading(true);
     try {
       await api.post("/register", {
         username: username.trim(),
-        email:    email.trim(),
+        email: email.trim(),
         password: pwd.trim(),
       });
       alert("Registered successfully!");
@@ -33,8 +32,7 @@ export default function Register() {
     <div className="relative min-h-screen">
       <img src={bg} className="absolute inset-0 -z-10 h-full w-full object-cover" />
 
-      <div className="flex flex-col items-center gap-8 pt-6">
-        {/* back arrow */}
+      <div className="flex flex-col items-center gap-8 pt-6 pb-16">
         <button onClick={() => nav(-1)} className="self-start p-4 text-white">
           ←
         </button>
@@ -64,9 +62,7 @@ export default function Register() {
 
         {loading
           ? <div className="loader" />
-          : <button className="btn-primary w-60" onClick={submit}>
-              REGISTER
-            </button>}
+          : <button className="btn-primary" onClick={submit}>REGISTER</button>}
       </div>
     </div>
   );
