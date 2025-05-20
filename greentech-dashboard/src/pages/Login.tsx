@@ -28,30 +28,48 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen">
-      <img src={bg} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+    <div className="">
+      <div
+        className="rounded-xl shadow-lg p-10 w-full max-w-2xl text-center bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${bg})`,
+        }}
+      >
+        {/* Logo */}
+        <img src={logo} className="w-36 mx-auto mb-4" />
 
-      <div className="flex flex-col items-center gap-8 pt-10 pb-16">
-        <img src={logo} className="w-36" />
-        <h2 className="text-3xl font-bold text-green-900">Welcome Back</h2>
+        {/* Title */}
+        <h2 className="text-3xl font-bold text-green-900 mb-8">Welcome Back</h2>
 
+        {/* Email Input */}
         <input
-          className="input"
+          className="w-full max-w-sm mx-auto mb-4 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
           placeholder="Email"
           value={email}
           onChange={e => setEmail(e.target.value)}
         />
+
+        {/* Password Input */}
         <input
-          className="input"
           type="password"
+          className="w-full max-w-sm mx-auto mb-6 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
           placeholder="Password"
           value={pwd}
           onChange={e => setPwd(e.target.value)}
         />
 
-        {loading
-          ? <div className="loader" />
-          : <button className="btn-primary" onClick={submit}>LOGIN</button>}
+        {/* Button or Loader */}
+        {loading ? (
+          <div className="text-green-900 font-semibold">Loading...</div>
+        ) : (
+          <button
+            className="px-6 py-2 rounded-md text-white font-semibold"
+            style={{ backgroundColor: "#0F4913" }}
+            onClick={submit}
+          >
+            LOGIN
+          </button>
+        )}
       </div>
     </div>
   );

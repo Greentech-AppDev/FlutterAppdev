@@ -1,36 +1,38 @@
 import { Link } from "react-router-dom";
-import bg   from "../assets/bg.png";     // make sure the images are in /src/assets
 import logo from "../assets/logo.png";
+import bg from "../assets/bg.png"; // Make sure bg.png is in your /assets folder
 
 export default function Welcome() {
   return (
-    <div
-      className="min-h-screen w-full flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: `url(${bg})` }}
-    >
-      <div className="flex flex-col items-center gap-6 px-4">
-        {/* headline */}
-        <h1 className="text-6xl font-extrabold text-green-900 text-center drop-shadow-sm">
-          WELCOME!
-        </h1>
+    <div className="">
+      <div
+        className="rounded-xl shadow-lg p-20 max-w-md w-full text-center bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${bg})`,
+        }}
+      >
+        {/* Title */}
+        <h1 className="text-4xl font-extrabold text-green-900 mb-4">WELCOME!</h1>
 
-        {/* logo */}
-        <img src={logo} alt="logo" className="w-64 max-w-full" />
+        {/* Logo */}
+        <img src={logo} alt="GreenTech Logo" className="w-40 h-auto mx-auto mb-4" />
 
-        {/* buttons */}
-        <div className="flex flex-col gap-4 w-full max-w-md px-8">
+        {/* Subtitle */}
+        <p className="text-lg text-green-800 font-semibold mb-6">GreenTech</p>
+
+        {/* Buttons */}
+        <div className="flex justify-center gap-6">
           <Link
             to="/login"
-            className="rounded-xl py-4 text-white text-xl font-semibold text-center"
-            style={{ backgroundColor: "#0F4913" }}   /* dark green */
+            className="px-6 py-2 rounded-md text-white font-semibold"
+            style={{ backgroundColor: "#0F4913" }}
           >
             Login
           </Link>
-
           <Link
             to="/register"
-            className="rounded-xl py-4 text-white text-xl font-semibold text-center"
-            style={{ backgroundColor: "#275C29" }}   /* slightly lighter green */
+            className="px-6 py-2 rounded-md text-white font-semibold"
+            style={{ backgroundColor: "#275C29" }}
           >
             Register
           </Link>
