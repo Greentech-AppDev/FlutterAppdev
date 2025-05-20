@@ -7,14 +7,19 @@ import airIcon from "../assets/airtemplogo.png";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
-  const token = localStorage.getItem("token");
+  // 🔐 Hardcoded token for testing
+  const token =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIn0.CsnstcipfQ_rNlGYCBOhPNthAgL_q5Q22eW6n96tBQ0";
 
-  const { data } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["temps"],
-    queryFn: async () =>
-      (await api.get("/latest-temperature", {
+    queryFn: async () => {
+      const response = await api.get("/temperature/latest", {
         headers: { Authorization: `Bearer ${token}` },
-      })).data,
+      });
+      console.log("Fetched temperature data:", response.data); // ✅ Debug log
+      return response.data;
+    },
     refetchInterval: 3000,
   });
 
@@ -32,7 +37,7 @@ export default function Dashboard() {
           to="/"
           className="btn-primary flex w-fit items-center gap-2 rounded-full bg-green-800 px-4 py-2 text-white shadow hover:bg-green-900"
         >
-          <span className="material-icons">HOME</span> 
+          <span className="material-icons">HOME</span>
         </Link>
 
         {/* Logo + Title */}
@@ -42,6 +47,14 @@ export default function Dashboard() {
             TEMPERATURE
           </h2>
         </div>
+
+        {/* Loading/Error State */}
+        {isLoading && <p className="text-white mt-4">Loading...</p>}
+        {error && (
+          <p className="text-red-500 mt-4">
+            Error fetching data: {(error as any).message}
+          </p>
+        )}
 
         {/* Cards */}
         <div className="mt-8 flex flex-col items-center gap-6">
