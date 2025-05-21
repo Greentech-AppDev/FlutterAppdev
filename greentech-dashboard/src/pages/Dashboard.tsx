@@ -40,7 +40,7 @@ export default function Dashboard() {
         {/* Logo + Title */}
         <div className="flex flex-col items-center gap-4 mb-8">
           <img src={logo} alt="Logo" className="w-20" />
-          <h2 className="text-3xl font-bold text-green-900 tracking-wide">
+          <h2 className="text-3xl font-bold text-green-500 tracking-wide">
             TEMPERATURE
           </h2>
         </div>

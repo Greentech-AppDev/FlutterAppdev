@@ -48,7 +48,7 @@ export default function Register() {
         <img src={logo} className="w-36 mx-auto mb-4" />
 
         {/* Title */}
-        <h2 className="text-3xl font-bold text-green-900 mb-8">Register</h2>
+        <h2 className="text-3xl font-bold text-green-500 mb-8">Register</h2>
 
         {/* Username */}
         <input
