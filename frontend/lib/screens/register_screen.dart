@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -37,13 +36,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        final data = jsonDecode(res.body);
-        final token = data['access_token'] as String?;
-        if (token != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('access_token', token);
-        }
-
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Registered successfully!')));
         Navigator.pushReplacement(
@@ -94,6 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SafeArea(
             child: Column(
               children: [
+                // ← Back arrow
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
