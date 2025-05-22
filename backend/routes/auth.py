@@ -1,66 +1,61 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-import models, schemas, auth, email_utils
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException, Depends
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+from database import get_db
+from models import User
+from fastapi.security import OAuth2PasswordBearer
+from passlib.context import CryptContext
+import os
+from dotenv import load_dotenv
 
-models.Base.metadata.create_all(bind=engine)
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-hardcoded-secret-if-env-is-missing")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+# 🔁 Updated: no "exp" claim
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
-        yield db
-    finally:
-        db.close()
-
-@router.post("/register", response_model=schemas.UserOut)
-async def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = auth.get_password_hash(user.password)
-    new_user = models.User(email=user.email, hashed_password=hashed_password)
-
-    # Generate persistent token and store
-    access_token = auth.create_access_token(data={"sub": new_user.email})
-    new_user.token = access_token
-
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    # Optionally send email verification
-    # await email_utils.send_verification_email(new_user.email, access_token)
-
-    return new_user
-
-@router.post("/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
-    if not auth.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
-    if not user.is_verified:
-        raise HTTPException(status_code=400, detail="Email not verified")
-
-    access_token = auth.create_access_token(data={"sub": user.email})
-    user.token = access_token  # Store new token
-    db.commit()
-
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@router.get("/esp-token")
-def get_token_for_esp(user: str = Query(...), db: Session = Depends(get_db)):
-    user_obj = db.query(models.User).filter(models.User.email == user).first()
-    if not user_obj or not user_obj.token:
-        raise HTTPException(status_code=404, detail="Token not found")
-    return {"access_token": user_obj.token}
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+        return {"user_id": user_id}
+    except JWTError:
+        raise credentials_exception
 
 @router.get("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):
-    # decode token to get email, validate, update user.is_verified = True
-    pass
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = int(payload.get("sub"))
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.is_verified = True
+        db.commit()
+        return {"message": "Email verified successfully"}
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
