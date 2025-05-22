@@ -9,6 +9,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_verified = Column(Boolean, default=False)
+    token = Column(String, nullable=True)  # Store token for ESP32 and Flutter auto-auth
 
 
 # Pydantic models
@@ -24,7 +25,7 @@ class UserOut(BaseModel):
     is_verified: bool
 
     class Config:
-        from_attributes = True  # new in Pydantic v2
+        from_attributes = True  # For Pydantic v2 (was orm_mode in v1)
 
 class Token(BaseModel):
     access_token: str
