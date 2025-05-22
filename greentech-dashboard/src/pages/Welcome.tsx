@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
-import bg from "../assets/bg.png"; // Make sure bg.png is in your /assets folder
+import bg from "../assets/home.png"; // Make sure bg.png is in your /assets folder
 
 export default function Welcome() {
   return (
     <div className="">
       <div
-        className="rounded-xl shadow-lg p-20 max-w-md w-full text-center bg-cover bg-center"
+        className="rounded-xl shadow-lg w-[1200px] h-[700px] bg-white/90 rounded-2xl shadow-2xl p-12 text-center bg-cover bg-center"
         style={{
           backgroundImage: `url(${bg})`,
         }}
@@ -32,7 +32,7 @@ export default function Welcome() {
           <Link
             to="/register"
             className="px-6 py-2 rounded-md text-white font-semibold"
-            style={{ backgroundColor: "#275C29" }}
+            style={{ backgroundColor: "#0F4913" }}
           >
             Register
           </Link>

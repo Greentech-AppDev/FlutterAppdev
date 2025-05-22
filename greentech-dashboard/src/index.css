@@ -9,3 +9,9 @@
 .loader {
   @apply border-4 border-t-transparent border-white rounded-full w-8 h-8 animate-spin;
 }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}

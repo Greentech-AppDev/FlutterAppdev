@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_screen.dart';
 
 const String loginUrl = 'https://backendappdev.onrender.com/token';
@@ -17,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _pwd      = TextEditingController();
   bool  _loading  = false;
 
-  /* ───── LOGIN ───── */
   Future<void> _loginUser() async {
     setState(() => _loading = true);
 
@@ -26,10 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
         Uri.parse(loginUrl),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
-          // FastAPI OAuth2PasswordRequestForm expects **username** field, which is actually the email here
           'username'   : _username.text.trim(),
           'password'   : _pwd.text.trim(),
-          'grant_type' : 'password',   // MUST be literally "password"
+          'grant_type' : 'password',
         },
       );
 
@@ -39,7 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (res.statusCode == 200) {
         final token = jsonDecode(res.body)['access_token'] as String? ?? '';
-        // TODO: save token securely
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('access_token', token);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -69,7 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
-  /* ───── UI ───── */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.green[900],
                           )),
                       const SizedBox(height: 90),
-                      _input('Email', _username),  // changed label here
+                      _input('Email', _username),
                       const SizedBox(height: 20),
                       _input('Password', _pwd, isPassword: true),
                       const SizedBox(height: 30),

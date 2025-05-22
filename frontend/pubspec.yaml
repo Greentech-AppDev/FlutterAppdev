@@ -12,11 +12,13 @@ dependencies:
     sdk: flutter
   http: ^0.13.6
   cupertino_icons: ^1.0.8
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1  # check for latest version
 
 flutter:
   uses-material-design: true
@@ -26,3 +28,8 @@ flutter:
     - assets/bg2.png
     - assets/airtemplogo.png
     - assets/watertemplogo.png
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo.png"  # path to your logo image

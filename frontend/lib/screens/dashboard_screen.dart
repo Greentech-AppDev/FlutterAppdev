@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'welcome_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -15,20 +16,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double? waterTemp;
   double? airTemp;
   late Timer _timer;
+  String? _bearer;
 
   static const _url = 'https://backendappdev.onrender.com/temperature/latest';
-  static const _bearer =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ3NzczMjkwfQ.z5Jo1DeGbP8RUyD91VwcsmcgAN6bT0KUo86AVbBIxvk';
 
   @override
   void initState() {
     super.initState();
-    _fetch();
-    _timer = Timer.periodic(
-      const Duration(seconds: 3), (_) => _fetch());
+    _loadTokenAndFetch();
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _fetch());
+  }
+
+  Future<void> _loadTokenAndFetch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    if (token != null) {
+      setState(() => _bearer = token);
+      _fetch();
+    } else {
+      debugPrint('No token found');
+    }
   }
 
   Future<void> _fetch() async {
+    if (_bearer == null) return;
     try {
       final res = await http.get(Uri.parse(_url), headers: {
         'Authorization': 'Bearer $_bearer',
@@ -58,59 +69,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       body: Stack(children: [
         Positioned.fill(
-          child: Image.asset(
-            'assets/bg2.png',
-            fit: BoxFit.cover,
-          ),
+          child: Image.asset('assets/bg2.png', fit: BoxFit.cover),
         ),
         SafeArea(
-          child: Container(
-            height: MediaQuery.of(context).size.height,
-            width: double.infinity,
-            child: SingleChildScrollView(
-              child: Column(children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const WelcomeScreen()),
-                          (_) => false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0B4F13),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                      icon: const Icon(Icons.home),
-                      label: const Text('HOME'),
+          child: SingleChildScrollView(
+            child: Column(children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      (_) => false),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0B4F13),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
                     ),
+                    icon: const Icon(Icons.home),
+                    label: const Text('HOME'),
                   ),
                 ),
-                const SizedBox(height: 10),
-                Image.asset('assets/logo.png', width: 70),
-                const SizedBox(height: 20),
-                _title('TEMPERATURE'),
-                const SizedBox(height: 30),
-                _card(
-                  icon: 'assets/watertemplogo.png',
-                  label: 'Temperature',
-                  value: waterTemp != null
-                      ? '${waterTemp!.toStringAsFixed(1)}°C'
-                      : '—'),
-                const SizedBox(height: 20),
-                _card(
-                  icon: 'assets/airtemplogo.png',
-                  label: 'Humidity',
-                  value: airTemp != null
-                      ? '${airTemp!.toStringAsFixed(1)}°C'
-                      : '—'),
-                const SizedBox(height: 40),
-              ]),
-            ),
+              ),
+              const SizedBox(height: 10),
+              Image.asset('assets/logo.png', width: 70),
+              const SizedBox(height: 20),
+              _title('TEMPERATURE'),
+              const SizedBox(height: 30),
+              _card(icon: 'assets/watertemplogo.png', label: 'Temperature',
+                value: waterTemp != null
+                    ? '${waterTemp!.toStringAsFixed(1)}°C' : '—'),
+              const SizedBox(height: 20),
+              _card(icon: 'assets/airtemplogo.png', label: 'Humidity',
+                value: airTemp != null
+                    ? '${airTemp!.toStringAsFixed(1)}°C' : '—'),
+              const SizedBox(height: 40),
+            ]),
           ),
         ),
       ]),
